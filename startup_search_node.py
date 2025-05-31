@@ -1,13 +1,22 @@
-# startup_search_node.py
-# Controls MiRo's startup face search behavior, recognition, and profile activation
-
 import time
 import json
 import rospy
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from authentication import FaceAuthenticator
-from config import PROFILE_DIR, DEBUG_FACE_RECOGNITION, SEARCH_TIMEOUT, SEARCH_INTERVAL
+from registration import register_new_face
+from config import (
+    PROFILE_DIR,
+    DEBUG_FACE_RECOGNITION,
+    SEARCH_TIMEOUT,
+    SEARCH_INTERVAL
+)
+from debug_utils import (
+    log_info,
+    log_warning,
+    log_error,
+    log_face_recognition
+)
 
 # ROS publishers
 head_pub = None
@@ -20,49 +29,53 @@ user_name = None
 search_start_time = None
 
 def speak(text):
-    """Publish text to the MiRo voice system."""
-    voice_pub.publish(text)
-
-def turn_head(yaw):
-    """Simulate MiRo's head yaw rotation."""
-    twist = Twist()
-    twist.angular.z = yaw
-    head_pub.publish(twist)
+    """Publish text to MiRo's voice system."""
+    if voice_pub:
+        voice_pub.publish(text)
+        log_info(f"[SPEAK] {text}")
+    else:
+        log_warning("Voice publisher not initialized.")
 
 def turn_body():
-    """Simulate MiRo's slow clockwise body turn."""
-    twist = Twist()
-    twist.angular.z = 0.5
-    motor_pub.publish(twist)
+    """Simulate body turning to scan for a face."""
+    if motor_pub:
+        twist = Twist()
+        twist.angular.z = 0.5
+        motor_pub.publish(twist)
 
 def stop_body():
-    """Stop MiRo's rotational movement."""
-    twist = Twist()
-    twist.angular.z = 0.0
-    motor_pub.publish(twist)
+    """Stop MiRo's rotation."""
+    if motor_pub:
+        twist = Twist()
+        twist.angular.z = 0.0
+        motor_pub.publish(twist)
 
 def load_profile(name):
-    """Attempt to load user profile JSON and set ROS param for profile activation."""
+    """Load a user's profile from disk."""
     try:
         with open(f"{PROFILE_DIR}{name}.json", "r") as f:
             profile = json.load(f)
         rospy.set_param("miro_active_profile", name)
-        rospy.loginfo(f"[PROFILE] Loaded profile for {name}")
+        log_info(f"[PROFILE] Loaded profile for {name}")
         return profile
     except FileNotFoundError:
-        rospy.logwarn("[PROFILE] Profile not found for user: " + name)
+        log_warning(f"[PROFILE] Not found for: {name}")
+        return None
+    except Exception as e:
+        log_error(f"[PROFILE] Failed to load {name}: {e}")
         return None
 
 def search_loop():
-    """Main loop to search for a known face. If found, activate user profile."""
+    """Search for a face and optionally trigger registration."""
     global found_user, user_name
     sweep_count = 0
     speak("Hmm... Hello? Anyone there?")
-
     auth = FaceAuthenticator()
 
     while not found_user and (time.time() - search_start_time < SEARCH_TIMEOUT):
         user_name = auth.recognize_face()
+        log_face_recognition(f"Face recognized as: {user_name}" if user_name else "Face not recognized")
+
         if user_name:
             found_user = True
             stop_body()
@@ -70,22 +83,25 @@ def search_loop():
             load_profile(user_name)
             return
 
-        # Not recognised yet - sweep
         turn_body()
         time.sleep(SEARCH_INTERVAL)
         sweep_count += 1
 
-        if sweep_count >= int(360 / (SEARCH_INTERVAL * 30)):
-            stop_body()
-            speak("I still don't recognise anyone...")
-            break
+    # Timeout: no known face found
+    stop_body()
+    speak("Hello there! I don’t believe we’ve met.")
+    log_info("[SEARCH] Timeout — no face recognized.")
 
-    if not found_user:
-        speak("Hello there! I don’t believe we’ve met.")
-        rospy.loginfo("[SEARCH] No user identified after timeout.")
+    # Register new user
+    speak("Would you like me to remember you? Please look directly at me.")
+    success, new_name = register_new_face()
+    if success:
+        speak(f"Nice to meet you, {new_name}! I’ll remember your face.")
+        rospy.set_param("miro_active_profile", new_name)
+        found_user = True
 
 def main():
-    """ROS Node Entry Point: Initialise publishers and begin face search."""
+    """Entry point for startup search node."""
     global head_pub, voice_pub, motor_pub, search_start_time
 
     rospy.init_node("startup_search_node")
@@ -93,12 +109,10 @@ def main():
     voice_pub = rospy.Publisher("/miro/command/voice", String, queue_size=1)
     motor_pub = rospy.Publisher("/miro/command/motor", Twist, queue_size=1)
 
-    time.sleep(2)  # Let publishers initialise properly
+    time.sleep(2)  # Let publishers fully initialise
     search_start_time = time.time()
-
     search_loop()
 
-    # After completion, signal readiness to other nodes
     rospy.set_param("miro_ready", found_user)
     rospy.spin()
 
