@@ -27,9 +27,9 @@ try:
     os.makedirs(LOG_DIR, exist_ok=True)
 except Exception as e:
     print(f"[ERROR] Failed to create log directory '{LOG_DIR}': {e}")
-    LOG_DIR = "."  # Fallback to current dir
+    LOG_DIR = "."  # Fallback to current directory
 
-# === Logging configuration ===
+# === Configure logging output ===
 try:
     logging.basicConfig(
         filename=os.path.join(LOG_DIR, "mirogpt_debug.log"),
@@ -43,6 +43,7 @@ except Exception as e:
 # === Generic logging wrappers ===
 
 def log_debug(msg):
+    """Log a debug message with optional console print."""
     try:
         logging.debug(msg)
         print(f"[DEBUG] {msg}")
@@ -50,6 +51,7 @@ def log_debug(msg):
         print(f"[ERROR] Debug logging failed: {e}")
 
 def log_info(msg):
+    """Log an info message with optional console print."""
     try:
         logging.info(msg)
         print(f"[INFO] {msg}")
@@ -57,6 +59,7 @@ def log_info(msg):
         print(f"[ERROR] Info logging failed: {e}")
 
 def log_warning(msg):
+    """Log a warning message with optional console print."""
     try:
         logging.warning(msg)
         print(f"[WARNING] {msg}")
@@ -64,6 +67,7 @@ def log_warning(msg):
         print(f"[ERROR] Warning logging failed: {e}")
 
 def log_error(msg):
+    """Log an error message with optional console print."""
     try:
         logging.error(msg)
         print(f"[ERROR] {msg}")
@@ -73,7 +77,7 @@ def log_error(msg):
 # === Specific usage logs ===
 
 def log_gpt_response(prompt, response):
-    """Logs full GPT prompt + response if enabled."""
+    """Logs full GPT prompt + response if DEBUG_GPT is enabled."""
     if DEBUG_GPT:
         try:
             log_debug("--- GPT PROMPT ---")
@@ -84,7 +88,7 @@ def log_gpt_response(prompt, response):
             print(f"[ERROR] GPT response logging failed: {e}")
 
 def log_fallback_emotion(input_text, response_obj):
-    """Logs invalid GPT output to fallback file."""
+    """Logs invalid GPT output to fallback file for offline analysis."""
     if DEBUG_GPT:
         fallback_data = {
             "timestamp": datetime.now().isoformat(),
@@ -99,7 +103,7 @@ def log_fallback_emotion(input_text, response_obj):
             print(f"[ERROR] Fallback log write failed: {e}")
 
 def log_profile_action(action, profile_name):
-    """Logs reads/writes to user profiles."""
+    """Logs profile reads, writes, or updates."""
     if DEBUG_PROFILE_IO:
         try:
             log_info(f"[Profile] Action: {action} – User: {profile_name}")
@@ -107,7 +111,7 @@ def log_profile_action(action, profile_name):
             print(f"[ERROR] Profile logging failed: {e}")
 
 def log_face_recognition(event):
-    """Logs events related to facial recognition."""
+    """Logs face recognition-related messages."""
     if DEBUG_FACE_RECOGNITION:
         try:
             log_info(f"[FaceRec] {event}")
@@ -115,7 +119,7 @@ def log_face_recognition(event):
             print(f"[ERROR] Face recognition logging failed: {e}")
 
 def log_emotion_event(tag, source):
-    """Logs final tagged emotion and context (e.g., utterance source)."""
+    """Logs final tagged emotion and context (e.g., from GPT or direct input)."""
     if DEBUG_EMOTION_LOGGING:
         try:
             log_info(f"[Emotion] Detected '{tag}' from: {source}")

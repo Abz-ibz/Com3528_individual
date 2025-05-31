@@ -27,7 +27,7 @@ class SimpleFaceRec:
 
     def _load_known_faces(self):
         """
-        Load and encode user face images stored in subfolders under KNOWN_FACES_DIR.
+        Load and encode user face images stored in subdirectories under KNOWN_FACES_DIR.
         Each subfolder should be named after the person and contain one or more images.
         """
         if DEBUG_FACE_RECOGNITION:
