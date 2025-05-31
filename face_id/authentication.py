@@ -1,73 +1,63 @@
+# authentication.py
+
 import cv2
-import os
-import time
-from Team6_work.face_id.simple_facerec import SimpleFacerec
+from simple_facerec import SimpleFaceRec
+import logging
+from config import DEBUG_FACE_RECOGNITION
 
-def authenticate(callback=None):
-    sfr = SimpleFacerec()
-    sfr.load_encoding_images("Team6_work/face_id/images/")
+# Configure logging
+logging.basicConfig(level=logging.DEBUG if DEBUG_FACE_RECOGNITION else logging.INFO,
+                    format='[%(levelname)s] %(message)s')
 
-    cap = cv2.VideoCapture(0)
+class FaceAuthenticator:
+    """
+    FaceAuthenticator wraps around SimpleFaceRec to manage the camera stream and perform
+    face recognition from real-time input.
+    """
+    def __init__(self, images_path=None):
+        """
+        Initialise the face recognition system and connect to the camera.
+        :param images_path: Optional path override for face images (usually from config)
+        """
+        self.sfr = SimpleFaceRec()  # Initialise face recogniser
+        self.camera = cv2.VideoCapture(0)  # Open webcam
+        if not self.camera.isOpened():
+            logging.error("Camera could not be accessed.")
 
-    attempt_counter = 0
-    recognised_counter = 0
-    recognised_name = None
-    consistent_threshold = 5
-
-    while True:
-        ret, frame = cap.read()
+    def recognize_face(self):
+        """
+        Capture a frame and attempt to identify a known face.
+        :return: Name of recognised user or None if no known face is found.
+        """
+        ret, frame = self.camera.read()
         if not ret:
-            print("Failed to grab frame")
-            break
+            logging.warning("Failed to read frame from camera.")
+            return None
 
-        attempt_counter += 1
-        print(f"Attempt {attempt_counter}: ", end="")
+        name = self.sfr.detect_known_face(frame)
+        if name != "Unknown":
+            logging.info(f"User recognised: {name}")
+            return name
+        else:
+            logging.debug("Face detected but not recognised.")
+        return None
 
-        face_locations, face_names, is_recognised = sfr.detect_known_faces(frame)
-        print(f"Found {len(face_locations)} face(s)")
-
-        for (top, right, bottom, left), name in zip(face_locations, face_names):
-            if name != "Unknown":
-                print(f"Recognised: {name}")
-                if name == recognised_name:
-                    recognised_counter += 1
-                else:
-                    recognised_name = name
-                    recognised_counter = 1
-
-                if recognised_counter >= consistent_threshold:
-                    print("Confirmed identity:", name)
-                    cv2.putText(frame, f"{name}", (left, top - 10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                    cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
-                    cv2.imshow("Face ID Authentication", frame)
-                    if callback:
-                        callback(name)
-                    time.sleep(5)
-                    cap.release()
-                    cv2.destroyAllWindows()
-                    return
-            else:
-                print("Unrecognised")
-
-            # Draw red box regardless
-            cv2.putText(frame, f"{name}", (left, top - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-            cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-
-        cv2.imshow("Face ID Authentication", frame)
-
-        if cv2.waitKey(1) == ord('q') or attempt_counter >= 100:
-            print("Face not recognised or something went wrong.")
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-def my_callback(name):
-    print("Face recognised!")
-    # You can call your MIRO function here
-    # launch_reminiscence(name)
+    def release(self):
+        """
+        Release the webcam resource.
+        """
+        self.camera.release()
 
 if __name__ == "__main__":
-    authenticate(my_callback)
+    # Debug mode: test the face authentication system in isolation
+    auth = FaceAuthenticator()
+    try:
+        logging.info("Starting face recognition test. Press Ctrl+C to exit.")
+        while True:
+            user = auth.recognize_face()
+            if user:
+                print(f"User identified: {user}")
+    except KeyboardInterrupt:
+        logging.info("Shutting down test loop.")
+    finally:
+        auth.release()

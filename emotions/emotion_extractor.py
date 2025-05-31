@@ -1,50 +1,83 @@
 # emotion_extractor.py
-# Extracts emotional tone from user input using OpenAI's GPT
 
 import openai
-import os
+import logging
+import re
+from config import (
+    OPENAI_API_KEY,      # API key for OpenAI GPT access
+    GPT_MODEL,           # Model selection (e.g., 'gpt-4')
+    EMOTION_TAGS,        # Allowed emotion tags (strict list)
+    DEBUG_GPT            # Debugging flag for verbose output
+)
+from gpt_prompt import GPT_PROMPT_TEMPLATE  # Externalised prompt template for cleaner logic
 
-# Load your OpenAI API key (you can set this as an environment variable for security)
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Set OpenAI API key
+openai.api_key = OPENAI_API_KEY
 
-# Define possible emotions
-EMOTION_TAGS = ["happy", "sad", "nostalgic", "frustrated", "curious", "neutral"]
+# Configure logging format
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 
-def extract_emotion(user_input, conversation_context=""):
+def extract_emotion(text):
     """
-    Returns a single-word emotional tag based on user's latest input.
-    Only the tag is returned, not a full GPT response.
+    Extracts the dominant emotional tone from a given input string
+    using OpenAI's GPT API. Returns a strict tag match or 'neutral'.
     """
-    system_prompt = f"""
-    You are an emotion classification assistant.
-    Determine the emotional tone of the following user input.
-    Respond with only one of the following emotions: {', '.join(EMOTION_TAGS)}.
-    If unclear, respond with 'neutral'.
-    """
-
-    full_prompt = f"Context: {conversation_context}\n\nUser: {user_input}"
+    # Fill the prompt template with the allowed emotion list and user input
+    prompt = GPT_PROMPT_TEMPLATE.format(
+        emotion_list=', '.join(EMOTION_TAGS),
+        user_input=text
+    )
 
     try:
+        # Query GPT model with system and user messages
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model=GPT_MODEL,
             messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": full_prompt}
+                {"role": "system", "content": "You are an expert emotion recogniser."},
+                {"role": "user", "content": prompt}
             ],
-            max_tokens=5,
-            temperature=0.0
+            temperature=0
         )
-        emotion = response.choices[0].message['content'].strip().lower()
-        if emotion in EMOTION_TAGS:
+
+        # Log full response if debugging is on
+        if DEBUG_GPT:
+            logging.debug(f"GPT full response object: {response}")
+
+        # Extract the raw output from GPT
+        raw_output = response.choices[0].message['content'].strip().lower()
+
+        # Log raw extracted content
+        if DEBUG_GPT:
+            logging.debug(f"GPT raw content: {raw_output}")
+
+        # Match response against valid emotion tags
+        matched_emotion = re.match(r'^(' + '|'.join(re.escape(tag) for tag in EMOTION_TAGS) + r')$', raw_output)
+
+        if matched_emotion:
+            emotion = matched_emotion.group(1)
+            logging.info(f"Extracted emotion: {emotion}")
             return emotion
         else:
+            logging.warning(f"Invalid emotion response: '{raw_output}'. Defaulting to 'neutral'.")
+            # Log unclassified results for manual review
+            with open("logs/fallback_emotion_log.txt", "a") as f:
+                f.write(f"INPUT: {text}\nRESPONSE: {raw_output}\n\n")
             return "neutral"
+
     except Exception as e:
-        print(f"[ERROR] Emotion extraction failed: {e}")
+        logging.error(f"Error extracting emotion: {e}")
+        # Log the failure input and error message
+        with open("logs/fallback_emotion_log.txt", "a") as f:
+            f.write(f"INPUT: {text}\nERROR: {str(e)}\n\n")
         return "neutral"
 
-
 if __name__ == "__main__":
-    user_input = input("Enter a message: ")
-    detected_emotion = extract_emotion(user_input)
-    print(f"Detected emotion: {detected_emotion}")
+    # Simple test cases for local validation
+    test_inputs = [
+        "I miss my family so much lately.",
+        "That time we danced all night was amazing!",
+        "I’m not really in the mood to talk."
+    ]
+
+    for t in test_inputs:
+        print(f"Input: {t}\nDetected Emotion: {extract_emotion(t)}\n")

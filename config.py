@@ -7,34 +7,37 @@ import os
 # You can set this as an environment variable for security
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "your-default-fallback-key")
 
-### === FACE ID === ###
-FACES_DIR = "face_id/faces"  # Directory for known face images
-FACE_MATCH_THRESHOLD = 0.5   # Distance threshold for accepting a face match
+# === SYSTEM PATHS ===
+PROFILE_DIR = "profiles/"
+LOG_DIR = "logs/"
+FALLBACK_LOG = os.path.join(LOG_DIR, "fallback_invalid_emotion.jsonl")
 
-### === PROFILES === ###
-PROFILES_DIR = "profiles/"   # Folder where user profile JSONs are stored
-DEFAULT_PROFILE_NAME = "alex"  # Fallback if no face is matched
+# === ROS TOPICS ===
+ROS_TOPIC_EARS = "/miro/command/ears"
+ROS_TOPIC_HEAD = "/miro/command/head"
+ROS_TOPIC_MOTOR = "/miro/command/motor"
+ROS_TOPIC_ILLUM = "/miro/command/illum"
+ROS_TOPIC_VOICE = "/miro/command/voice"
+ROS_TOPIC_EMOTION = "/miro/emotion_tag"
 
-### === EMOTIONS === ###
-EMOTION_TAGS = ["happy", "sad", "nostalgic", "frustrated", "curious", "neutral"]
+# === EMOTION TAGS ===
+EMOTION_TAGS = ["happy", "sad", "nostalgic", "neutral", "angry", "curious"]
 
-### === ROS TOPICS === ###
-VOICE_TOPIC = "/miro/command/voice"
-HEAD_TOPIC = "/miro/command/head"
-MOTOR_TOPIC = "/miro/command/motor"
-EARS_TOPIC = "/miro/command/ears"
-ILLUM_TOPIC = "/miro/command/illum"
+# === FACE RECOGNITION ===
+FACE_MATCH_THRESHOLD = 0.6
+CAMERA_SOURCE = 0  # default webcam; replace with ROS topic if using MiRo-E feed
 
-### === SEARCH SETTINGS === ###
-SEARCH_TIMEOUT = 90        # Seconds to search for a user
-SEARCH_INTERVAL = 5        # Seconds between rotation steps
-SEARCH_ANGLE_INCREMENT = 30 # Angle step size (degrees) to simulate scanning
+# === GPT SETTINGS ===
+GPT_MODEL = "gpt-4"
+MAX_TOKENS = 100
+TEMPERATURE = 0.7
+DEBUG_GPT = True
 
-### === GPT MODEL === ###
-GPT_MODEL = "gpt-4"  # Can switch to "gpt-3.5-turbo" for lower cost
-MAX_GPT_TOKENS = 5
-GPT_TEMPERATURE = 0.0
+# === SYSTEM BEHAVIOR ===
+IDLE_TIMEOUT = 30  # seconds before MiRo goes into idle if no user
+SESSION_MAX_LENGTH = 300  # max seconds for one reminiscence session
 
-### === LOGGING === ###
-LOG_DIR = "logs/"           # Folder to store session logs
-SESSION_LOG_FORMAT = "%Y-%m-%d_%H-%M-%S"
+# === DEBUG FLAGS ===
+DEBUG_FACE_RECOGNITION = True
+DEBUG_PROFILE_IO = True
+DEBUG_EMOTION_LOGGING = True
