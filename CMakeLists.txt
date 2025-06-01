@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(Com3528_individual)
+project(com3528_individual)
 
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
@@ -17,8 +17,8 @@ include_directories(
 catkin_install_python(PROGRAMS
   scripts/startup_search_node.py
   scripts/authentication_node.py
-  scripts/mode_selector.py
-  scripts/registration.py
+  scripts/test_node.py
+  # scripts/registration.py
   # Add more ROS node scripts here as needed
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

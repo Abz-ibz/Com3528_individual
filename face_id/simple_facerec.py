@@ -6,14 +6,18 @@ import os
 import numpy as np
 import logging
 from config import (
-    KNOWN_FACES_DIR,         # Directory containing known user face images
-    TOLERANCE,               # Threshold for face match confidence
-    MODEL,                   # Face detection model (e.g., 'hog' or 'cnn')
-    DEBUG_FACE_RECOGNITION   # Debugging flag for face recognition logging
+    FACES_DIR,                # Directory containing known user face images
+    FACE_MATCH_THRESHOLD,     # Threshold for face match confidence
+    CAMERA_SOURCE,            # Camera source (default webcam or ROS topic)
+    DEBUG_FACE_RECOGNITION    # Debugging flag for face recognition logging
 )
 
+# Constants
+MODEL = "hog"  # Can switch to 'cnn' for higher accuracy if GPU is available
+
 # Set up logging configuration
-logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+logging.basicConfig(level=logging.DEBUG if DEBUG_FACE_RECOGNITION else logging.INFO,
+                    format='[%(levelname)s] %(message)s')
 
 class SimpleFaceRec:
     """
@@ -27,14 +31,14 @@ class SimpleFaceRec:
 
     def _load_known_faces(self):
         """
-        Load and encode user face images stored in subdirectories under KNOWN_FACES_DIR.
+        Load and encode user face images stored in subdirectories under FACES_DIR.
         Each subfolder should be named after the person and contain one or more images.
         """
         if DEBUG_FACE_RECOGNITION:
-            logging.debug(f"Loading known faces from {KNOWN_FACES_DIR}...")
+            logging.debug(f"Loading known faces from {FACES_DIR}...")
 
-        for name in os.listdir(KNOWN_FACES_DIR):
-            person_dir = os.path.join(KNOWN_FACES_DIR, name)
+        for name in os.listdir(FACES_DIR):
+            person_dir = os.path.join(FACES_DIR, name)
             if not os.path.isdir(person_dir):
                 continue
 
@@ -63,9 +67,11 @@ class SimpleFaceRec:
         face_locations = face_recognition.face_locations(rgb_frame, model=MODEL)
         face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
 
+        if DEBUG_FACE_RECOGNITION:
+            logging.debug(f"Detected {len(face_encodings)} face(s) in frame.")
+
         for encoding, location in zip(face_encodings, face_locations):
-            # Compare detected face encoding with known ones
-            results = face_recognition.compare_faces(self.known_face_encodings, encoding, TOLERANCE)
+            results = face_recognition.compare_faces(self.known_face_encodings, encoding, FACE_MATCH_THRESHOLD)
             face_distances = face_recognition.face_distance(self.known_face_encodings, encoding)
             best_match_index = np.argmin(face_distances) if face_distances.size > 0 else -1
 
@@ -80,7 +86,7 @@ class SimpleFaceRec:
 if __name__ == "__main__":
     # Manual testing: capture frames and display recognition results
     sfr = SimpleFaceRec()
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(CAMERA_SOURCE)
 
     while True:
         ret, frame = cap.read()

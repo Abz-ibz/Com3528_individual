@@ -3,7 +3,10 @@
 import cv2
 from simple_facerec import SimpleFaceRec
 import logging
-from config import DEBUG_FACE_RECOGNITION
+from config import (
+    CAMERA_SOURCE,
+    DEBUG_FACE_RECOGNITION
+)
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG if DEBUG_FACE_RECOGNITION else logging.INFO,
@@ -14,13 +17,12 @@ class FaceAuthenticator:
     FaceAuthenticator wraps around SimpleFaceRec to manage the camera stream and perform
     face recognition from real-time input.
     """
-    def __init__(self, images_path=None):
+    def __init__(self):
         """
         Initialise the face recognition system and connect to the camera.
-        :param images_path: Optional path override for face images (usually from config)
         """
         self.sfr = SimpleFaceRec()  # Initialise face recogniser
-        self.camera = cv2.VideoCapture(0)  # Open webcam
+        self.camera = cv2.VideoCapture(CAMERA_SOURCE)  # Open webcam or MiRo camera
         if not self.camera.isOpened():
             logging.error("Camera could not be accessed.")
 
