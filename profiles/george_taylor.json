@@ -1,0 +1,44 @@
+{
+    "name": "George Taylor",
+    "age": 87,
+    "ethnicity": "White British",
+    "condition": "Alzheimer’s Disease, Early–Moderate Stage",
+    "medical_history": [
+      "Mild cardiovascular disease",
+      "Left-ear hearing aid"
+    ],
+    "reminders": [
+      {
+        "time": "12:00 PM",
+        "task": "Take statin and warfarin"
+      },
+      {
+        "time": "6:00 PM",
+        "task": "Daily walk in the garden"
+      }
+    ],
+    "memories": [
+      {
+        "title": "RAF Service (1940s)",
+        "description": "Maintained Lancaster bombers and whistled \"We’ll Meet Again\" while working. Speaks proudly of fixing a jammed undercarriage during an air raid.",
+        "media_cue": {
+          "type": "audio",
+          "cue": "Vera Lynn - We’ll Meet Again"
+        },
+        "theme": "Vocational pride"
+      },
+      {
+        "title": "Woodwork Teaching at Sheffield College",
+        "description": "Recalls the scent of pine, carving dovetail joints with students, and receiving a hand-chiselled plaque from a student.",
+        "media_cue": null,
+        "theme": "Mentorship and craftsmanship"
+      },
+      {
+        "title": "Sunday Roast Tradition",
+        "description": "Carving lamb, preparing Yorkshire pudding, and hearing granddaughter ring the church bell before dinner.",
+        "media_cue": null,
+        "theme": "Intergenerational bonding"
+      }
+    ]
+  }
+  

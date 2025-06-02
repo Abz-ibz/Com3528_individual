@@ -1,7 +1,0 @@
-<launch>
-    <!-- Launcher script -->
-    <node name="miro_gpt_launcher" pkg="com3528_individual" type="miro_gpt_launcher.py" output="screen" />
-
-    <!-- Live camera viewer -->
-    <node name="camera_view" pkg="rqt_image_view" type="rqt_image_view" output="screen" />
-    </launch>

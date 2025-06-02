@@ -1,0 +1,33 @@
+{
+    "name": "Priya Kaur",
+    "age": 81,
+    "ethnicity": "British-Indian",
+    "condition": "Vascular Dementia, Moderate Stage",
+    "medical_history": [
+      "Hypertension",
+      "History of TIA",
+      "Slight expressive aphasia"
+    ],
+    "reminders": [
+      {"time": "10:00", "activity": "Take blood pressure medication"},
+      {"time": "16:00", "activity": "Chair-based yoga routine"}
+    ],
+    "memories": [
+      {
+        "title": "Wedding in Amritsar (1961)",
+        "description": "Walked under marigold canopy, scent of rosewater, danced to ‘Mehndi Laga Ke Rakhna’. Treasured photo in maroon lehenga beside husband.",
+        "media_cue": {"type": "image", "description": "Wedding photo on MiRo's screen"},
+        "theme": "Cultural identity and family bonds"
+      },
+      {
+        "title": "NHS Receptionist Job (1970s)",
+        "description": "Welcomed patients, translated Punjabi, remembered the weight of her name badge and first blue nurse coat.",
+        "theme": "Occupational dignity and bilingual service"
+      },
+      {
+        "title": "Sunday Chai with Daughters",
+        "description": "Boiled cardamom tea, BBC Asian Network played, shared silence between sips.",
+        "theme": "Routine familiarity and maternal presence"
+      }
+    ]
+  }
