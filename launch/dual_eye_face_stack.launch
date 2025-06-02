@@ -1,0 +1,10 @@
+<launch>
+  <!-- Face Recognition: Left Eye -->
+  <node pkg="com3528_individual" type="face_id_left_eye_node.py" name="face_id_left_eye_node" output="screen"/>
+
+  <!-- Face Recognition: Right Eye -->
+  <node pkg="com3528_individual" type="face_id_right_eye_node.py" name="face_id_right_eye_node" output="screen"/>
+
+  <!-- Face Centering Controller -->
+  <node pkg="com3528_individual" type="face_centering_node.py" name="face_centering_node" output="screen"/>
+</launch>

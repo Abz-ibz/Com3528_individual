@@ -1,92 +1,60 @@
 #!/usr/bin/env python3
 
 import rospy
-import logging
-from std_msgs.msg import Float64
+import traceback
 from com3528_individual.msg import FaceData
-from geometry_msgs.msg import Twist
+from std_msgs.msg import Bool
+from settings.debug_utils import log_info, log_error, log_warning
 
-import sys
-import os
+class FaceCenteringNode:
+    def __init__(self):
+        rospy.init_node('face_centering_node')
 
-# Add project base directory to path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+        # Subscriptions to FaceData from left and right eye nodes
+        self.subscriber_left = rospy.Subscriber(
+            '/miro/face_id_left', FaceData, self.left_callback)
+        self.subscriber_right = rospy.Subscriber(
+            '/miro/face_id_right', FaceData, self.right_callback)
+        self.publisher = rospy.Publisher(
+            '/miro/face_centered', Bool, queue_size=10)
 
-from settings.config import (
-    FRAME_WIDTH,
-    CENTERING_GAIN,
-    MAX_HEAD_YAW,
-    DEBUG_FACE_RECOGNITION
-)
-from settings.debug_utils import log_info, log_warning, log_error, log_face_recognition
+        self.left_data = None
+        self.right_data = None
 
-# === ROS Publishers ===
-head_yaw_pub = None
-motor_pub = None
+        log_info("[BOOT - CENTERING] Node initialized and subscribers connected.")
 
-# === Constants ===
-CENTER_TOLERANCE = 40  # pixels of tolerance for being "centered"
+    def left_callback(self, msg):
+        try:
+            self.left_data = msg
+            self.evaluate_centering()
+        except Exception as e:
+            log_error(f"[LEFT CALLBACK ERROR - CENTERING] {e}")
+            traceback.print_exc()
 
-# === State Variables ===
-last_seen_time = None
-centered_once = False
+    def right_callback(self, msg):
+        try:
+            self.right_data = msg
+            self.evaluate_centering()
+        except Exception as e:
+            log_error(f"[RIGHT CALLBACK ERROR - CENTERING] {e}")
+            traceback.print_exc()
 
-def face_callback(msg):
-    global last_seen_time, centered_once
-
-    try:
-        x_center = msg.x + msg.width // 2
-        frame_center = FRAME_WIDTH // 2
-        offset = x_center - frame_center
-
-        head_yaw = -offset * CENTERING_GAIN
-        head_yaw = max(-MAX_HEAD_YAW, min(MAX_HEAD_YAW, head_yaw))
-
-        if DEBUG_FACE_RECOGNITION:
-            log_face_recognition(f"Offset: {offset}, Commanded Yaw: {head_yaw:.2f}")
-
-        # Check if face is within centering tolerance
-        is_centered = abs(offset) <= CENTER_TOLERANCE
-        rospy.set_param("miro_face_centered", is_centered)
-
-        if is_centered and not centered_once:
-            log_info("Face centered for the first time.")
-            centered_once = True
-
-        # Publish the yaw movement to head
-        head_yaw_msg = Float64()
-        head_yaw_msg.data = head_yaw
-        head_yaw_pub.publish(head_yaw_msg)
-
-        # Lock the wheels for stability
-        twist = Twist()
-        twist.linear.x = 0.0
-        twist.angular.z = 0.0
-        motor_pub.publish(twist)
-
-        last_seen_time = rospy.Time.now()
-
-    except Exception as e:
-        log_error(f"Error in face_callback: {e}")
-
-def main():
-    global head_yaw_pub, motor_pub
-
-    logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s', force=True)
-    rospy.init_node("face_centering_node")
-
-    log_info("Face Centering Node started.")
-
-    try:
-        head_yaw_pub = rospy.Publisher("/miro/command/head_yaw", Float64, queue_size=1)
-        motor_pub = rospy.Publisher("/miro/command/velocity", Twist, queue_size=1)
-
-        rospy.Subscriber("/face_id/face_data", FaceData, face_callback)
-
-        rospy.spin()
-
-    except rospy.ROSInterruptException:
-        log_warning("Face Centering Node interrupted.")
+    def evaluate_centering(self):
+        try:
+            if self.left_data and self.right_data:
+                # Both eyes must detect a centered face to confirm centering
+                is_centered = self.left_data.is_centered and self.right_data.is_centered
+                self.publisher.publish(Bool(data=is_centered))
+                log_info(f"[EVAL - CENTERING] Published is_centered = {is_centered}")
+        except Exception as e:
+            log_error(f"[EVAL ERROR - CENTERING] {e}")
+            traceback.print_exc()
 
 if __name__ == '__main__':
-    main()
+    try:
+        log_info("[BOOT - CENTERING] Starting face centering evaluation node...")
+        FaceCenteringNode()
+        rospy.spin()
+    except Exception as e:
+        log_error(f"[FATAL INIT ERROR - CENTERING] {e}")
+        traceback.print_exc()

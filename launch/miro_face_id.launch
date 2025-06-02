@@ -1,5 +1,0 @@
-<launch>
-  <node name="face_id_node" pkg="com3528_individual" type="face_id_node.py" output="screen" />
-  <node name="face_track_node" pkg="com3528_individual" type="face_track_node.py" output="screen" />
-  <node name="face_centering_node" pkg="com3528_individual" type="face_centering_node.py" output="screen" />
-</launch>

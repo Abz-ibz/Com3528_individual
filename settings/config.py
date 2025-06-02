@@ -4,7 +4,8 @@ import os
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # === Base Directory Structure ===
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+# Adjusted BASE_DIR to correctly point to the ROS package root (src/com3528_individual)
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 FACES_DIR = os.path.join(BASE_DIR, 'faces')
 MODELS_DIR = os.path.join(BASE_DIR, 'models')
 SNAPSHOTS_DIR = os.path.join(FACES_DIR, 'snapshots')
@@ -20,9 +21,13 @@ CAMERA_SOURCE_LEFT = "/miro/sensors/caml/compressed"
 CAMERA_SOURCE_RIGHT = "/miro/sensors/camr/compressed"
 
 # === ROS Topics ===
-TOPIC_FACE_ID = "/miro/face_id"
+TOPIC_FACE_ID_LEFT = "/miro/face_id/left"
+TOPIC_FACE_ID_RIGHT = "/miro/face_id/right"
 TOPIC_FACE_TRACK = "/miro/face_track"
 TOPIC_FACE_CENTER = "/miro/face_center"
+
+# === Recognition Folder Support ===
+RECOGNITION_FOLDERS = ["patients", "snapshots"]
 
 # === ROS Settings ===
 ROS_RATE = 10  # Hz
