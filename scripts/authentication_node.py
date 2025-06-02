@@ -1,8 +1,8 @@
-# authentication_node.py (Refactored)
+# authentication_node.py
 
 import rospy
 from std_msgs.msg import String
-from face_id import FaceAuthenticator
+from face_id.authentication import FaceAuthenticator
 import logging
 from config import (
     DEBUG_FACE_RECOGNITION,

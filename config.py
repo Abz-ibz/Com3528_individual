@@ -4,10 +4,12 @@
 import os
 
 # === File Paths ===
-FACES_DIR = "face_id/user_images"         # Directory for user profiles (known users)
-SNAPSHOTS_DIR = "face_id/snapshots"       # Directory for temporary unknown face captures
-PROFILES_DIR = "profiles"                 # User profile memory storage (JSON)
-LOGS_DIR = "logs"                         # Session logs and summaries
+# New (absolute paths using __file__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FACES_DIR = os.path.join(BASE_DIR, "face_id", "user_images")  # Directory for user profiles (known users)
+SNAPSHOTS_DIR = os.path.join(BASE_DIR, "face_id", "snapshots")  # Directory for temporary unknown face captures
+PROFILES_DIR = "profiles"                  # User profile memory storage (JSON)
+LOGS_DIR = "logs"                          # Session logs and summaries
 FALLBACK_LOG = os.path.join(LOGS_DIR, "fallback_invalid_emotion.log")
 
 # === GPT Configuration ===
@@ -24,7 +26,7 @@ EMOTION_TAGS = ["happy", "sad", "angry", "neutral", "nostalgic", "curious"]
 
 # === Face Recognition Parameters ===
 FACE_MATCH_THRESHOLD = 0.6
-CAMERA_SOURCE = 0  # Default webcam; replace with ROS topic if using MiRo-E camera
+CAMERA_SOURCE = "/miro/sensors/camr/compressed"  # Default webcam; replace with ROS topic if using MiRo-E camera
 
 # === ROS Topics (MiRo Commands) ===
 TOPIC_CMD_VEL = "/miro/command/velocity"

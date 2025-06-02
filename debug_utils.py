@@ -1,127 +1,59 @@
-# debug_utils.py
-"""
-Debugging Utilities for MiRoGPT
-Provides standardized logging and fallback mechanisms for diagnostics and post-hoc analysis.
-"""
-
-import logging
 import os
-import json
-from datetime import datetime
+import datetime
+import logging
+from config import (
+    LOGS_DIR,
+    DEBUG_FACE_RECOGNITION,
+    DEBUG_PROFILE_IO,
+    DEBUG_EMOTION_LOGGING,
+    DEBUG_ROS_TOPICS
+)
 
-# Attempt to import config; provide clear error if not found
-try:
-    from config import (
-        LOG_DIR,
-        FALLBACK_LOG,
-        DEBUG_GPT,
-        DEBUG_PROFILE_IO,
-        DEBUG_FACE_RECOGNITION,
-        DEBUG_EMOTION_LOGGING,
-    )
-except ImportError as e:
-    raise ImportError("❌ Failed to import from config.py. Ensure config.py exists and paths are correct.") from e
+# Ensure logs directory exists
+os.makedirs(LOGS_DIR, exist_ok=True)
 
-# === Ensure log directory exists ===
-try:
-    os.makedirs(LOG_DIR, exist_ok=True)
-except Exception as e:
-    print(f"[ERROR] Failed to create log directory '{LOG_DIR}': {e}")
-    LOG_DIR = "."  # Fallback to current directory
+# Define log file path
+DEBUG_LOG_PATH = os.path.join(LOGS_DIR, "miro_debug.log")
 
-# === Configure logging output ===
-try:
-    logging.basicConfig(
-        filename=os.path.join(LOG_DIR, "mirogpt_debug.log"),
-        level=logging.DEBUG,
-        format="%(asctime)s [%(levelname)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
-except Exception as e:
-    print(f"[ERROR] Logging configuration failed: {e}")
+# Configure root logger
+logging.basicConfig(
+    filename=DEBUG_LOG_PATH,
+    filemode='a',
+    format='[%(asctime)s] [%(levelname)s] %(message)s',
+    level=logging.DEBUG
+)
 
-# === Generic logging wrappers ===
+# Console output as fallback
+console = logging.StreamHandler()
+console.setLevel(logging.DEBUG)
+formatter = logging.Formatter('[%(levelname)s] %(message)s')
+console.setFormatter(formatter)
+logging.getLogger('').addHandler(console)
 
-def log_debug(msg):
-    """Log a debug message with optional console print."""
-    try:
-        logging.debug(msg)
-        print(f"[DEBUG] {msg}")
-    except Exception as e:
-        print(f"[ERROR] Debug logging failed: {e}")
+def log_info(message):
+    logging.info(message)
 
-def log_info(msg):
-    """Log an info message with optional console print."""
-    try:
-        logging.info(msg)
-        print(f"[INFO] {msg}")
-    except Exception as e:
-        print(f"[ERROR] Info logging failed: {e}")
+def log_warning(message):
+    logging.warning(message)
 
-def log_warning(msg):
-    """Log a warning message with optional console print."""
-    try:
-        logging.warning(msg)
-        print(f"[WARNING] {msg}")
-    except Exception as e:
-        print(f"[ERROR] Warning logging failed: {e}")
+def log_error(message):
+    logging.error(message)
 
-def log_error(msg):
-    """Log an error message with optional console print."""
-    try:
-        logging.error(msg)
-        print(f"[ERROR] {msg}")
-    except Exception as e:
-        print(f"[ERROR] Error logging failed: {e}")
+def log_critical(message):
+    logging.critical(message)
 
-# === Specific usage logs ===
-
-def log_gpt_response(prompt, response):
-    """Logs full GPT prompt + response if DEBUG_GPT is enabled."""
-    if DEBUG_GPT:
-        try:
-            log_debug("--- GPT PROMPT ---")
-            log_debug(prompt)
-            log_debug("--- GPT RESPONSE ---")
-            log_debug(str(response))
-        except Exception as e:
-            print(f"[ERROR] GPT response logging failed: {e}")
-
-def log_fallback_emotion(input_text, response_obj):
-    """Logs invalid GPT output to fallback file for offline analysis."""
-    if DEBUG_GPT:
-        fallback_data = {
-            "timestamp": datetime.now().isoformat(),
-            "input_text": input_text,
-            "response": str(response_obj)
-        }
-        try:
-            with open(FALLBACK_LOG, "a") as f:
-                f.write(json.dumps(fallback_data) + "\n")
-            log_warning("Logged fallback GPT response.")
-        except Exception as e:
-            print(f"[ERROR] Fallback log write failed: {e}")
-
-def log_profile_action(action, profile_name):
-    """Logs profile reads, writes, or updates."""
-    if DEBUG_PROFILE_IO:
-        try:
-            log_info(f"[Profile] Action: {action} – User: {profile_name}")
-        except Exception as e:
-            print(f"[ERROR] Profile logging failed: {e}")
-
-def log_face_recognition(event):
-    """Logs face recognition-related messages."""
+def log_face_recognition(message):
     if DEBUG_FACE_RECOGNITION:
-        try:
-            log_info(f"[FaceRec] {event}")
-        except Exception as e:
-            print(f"[ERROR] Face recognition logging failed: {e}")
+        logging.debug(f"[FACE] {message}")
 
-def log_emotion_event(tag, source):
-    """Logs final tagged emotion and context (e.g., from GPT or direct input)."""
+def log_profile_io(message):
+    if DEBUG_PROFILE_IO:
+        logging.debug(f"[PROFILE_IO] {message}")
+
+def log_emotion(message):
     if DEBUG_EMOTION_LOGGING:
-        try:
-            log_info(f"[Emotion] Detected '{tag}' from: {source}")
-        except Exception as e:
-            print(f"[ERROR] Emotion event logging failed: {e}")
+        logging.debug(f"[EMOTION] {message}")
+
+def log_ros(message):
+    if DEBUG_ROS_TOPICS:
+        logging.debug(f"[ROS] {message}")
